@@ -115,8 +115,7 @@ def main(argv):
 			sys.exit(2)
 
 	if t and n: train(t,n)
-	else: sys.exit(2)
-	if g and n: print generate(g, n)
+	elif g and n: print generate(g, n)
 	else: sys.exit(2)
 
 if __name__=='__main__': main(sys.argv[1:])
