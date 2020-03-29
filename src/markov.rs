@@ -33,7 +33,7 @@ fn weighted_char(table: HashMap<String, usize>)
     choice
   }
 
-fn generate_text(contents: &String, table: HashMap<String, usize>, order: usize)
+fn generate_text(length: usize, contents: &String, table: HashMap<String, usize>, order: usize)
   -> String {
     let mut result = String::new();
     
@@ -52,7 +52,7 @@ fn generate_text(contents: &String, table: HashMap<String, usize>, order: usize)
     
     // Set up weighted characters
     let mut next_char = String::new();
-    for _ in 0..(contents.len() / order) {
+    for _ in 0..(length / order) {
       match table.get(first_char) {
         Some(&dist) => next_char = weighted_char(table.clone()),
         _ => next_char = keys.choose(&mut rand::thread_rng()).unwrap().to_owned(),
@@ -66,22 +66,22 @@ fn generate_text(contents: &String, table: HashMap<String, usize>, order: usize)
   }
 
 fn generate_table(contents: &String, order: usize) 
-  -> HashMap<String, usize>{
+  -> HashMap<String, HashMap<String,usize>>{
   
     let mut table = HashMap::new();
     
     // Read text once, store sequences in HashMap
-    for x in (0..contents.len()).step_by(order) {
+    for x in (0..contents.len()) {
       let seq: String = contents
         .chars()
         .skip(x)
         .take(order)
         .collect();
-      table.insert(seq.to_string(),0);
+      table.insert(seq.to_string(),HashMap::new());
     }
     
     // Read text again to associate 
-    for x in (0..(contents.len() - order)).step_by(order) {
+    for x in (0..(contents.len() - order)) {
       let seq: String = contents
         .chars()
         .skip(x)
@@ -92,12 +92,12 @@ fn generate_table(contents: &String, order: usize)
         .skip(x + order)
         .take(order)
         .collect();
-      match table.get(&seq) {
-        Some(&dist) => *table.get_mut(&seq).unwrap() += 1,
-        _ => *table.get_mut(&seq).unwrap() = 1,
-      }
+      table.entry(seq)
+        .and_modify(|map| if let Some(value) = map.get_mut(&next) { *value += 1; })
+        .or_insert_with(HashMap::new)
+        .insert(next,1);
     }
-    
+    println!("{:?}",table);
     // Return resulting table as HashMap
     table
   }
@@ -120,7 +120,10 @@ fn main() {
   let order = args[1]
     .parse::<usize>()
     .unwrap();
+  let length = args[2]
+    .parse::<usize>()
+    .unwrap();
   let table = generate_table(&contents, order);
-  let result = generate_text(&contents, table, order);
+  //let result = generate_text(length, &contents, table, order);
   //println!("{:?}",table);
 }
