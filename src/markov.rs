@@ -1,31 +1,34 @@
-extern crate mersenne_twister;
 extern crate rand;
 
-use mersenne_twister::MersenneTwister;
-use rand::{Rng, SeedableRng};
+use rand::{Rng};
 use rand::seq::SliceRandom;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::Read;
 
-fn weighted_char(table: HashMap<String, usize>)
+fn weighted_char(map: HashMap<String, usize>)
   -> String {
+    
+    if map.is_empty() {
+      return "".to_string();
+    }
+  
     let mut choice = String::new();
     
     let mut sum = 0;
     
-    for value in table.values() {
+    for (_,value) in &map {
       sum += value;
     }
     
     let mut seed = rand::thread_rng()
       .gen_range(1,sum);
       
-    'gen: for (key,value) in table {
-      if seed <= value {
-        choice = key.to_string();
-        break 'gen;
+    'gen: for (key,value) in &map {
+      if seed <= *value {
+          choice = key.to_string();
+          break 'gen;
       }
       seed -= value;
     }
@@ -33,7 +36,7 @@ fn weighted_char(table: HashMap<String, usize>)
     choice
   }
 
-fn generate_text(length: usize, contents: &String, table: HashMap<String, usize>, order: usize)
+fn generate_text(length: usize, table: HashMap<String,HashMap<String, usize>>, order: usize)
   -> String {
     let mut result = String::new();
     
@@ -43,24 +46,26 @@ fn generate_text(length: usize, contents: &String, table: HashMap<String, usize>
       .cloned()
       .collect();
 
-    // Get random first character sequence
+   // Get random first character from keys
     let mut first_char = keys
       .choose(&mut rand::thread_rng())
       .unwrap();
+      
+    result.push_str(first_char);
     
-    result.to_owned().push_str(first_char);
-    
-    // Set up weighted characters
-    let mut next_char = String::new();
+    let mut next_char;
     for _ in 0..(length / order) {
       match table.get(first_char) {
-        Some(&dist) => next_char = weighted_char(table.clone()),
-        _ => next_char = keys.choose(&mut rand::thread_rng()).unwrap().to_owned(),
+        Some(map) => next_char = weighted_char(map.to_owned()),
+        _ => next_char = keys
+          .choose(&mut rand::thread_rng())
+          .unwrap()
+          .to_owned(),
       }
+    
       first_char = &next_char;
       result.push_str(&next_char);
     }
-    println!("{}",result);
     
     result
   }
@@ -71,7 +76,7 @@ fn generate_table(contents: &String, order: usize)
     let mut table = HashMap::new();
     
     // Read text once, store sequences in HashMap
-    for x in (0..contents.len()) {
+    for x in 0..contents.len() {
       let seq: String = contents
         .chars()
         .skip(x)
@@ -81,7 +86,7 @@ fn generate_table(contents: &String, order: usize)
     }
     
     // Read text again to associate 
-    for x in (0..(contents.len() - order)) {
+    for x in 0..(contents.len() - order) {
       let seq: String = contents
         .chars()
         .skip(x)
@@ -101,7 +106,7 @@ fn generate_table(contents: &String, order: usize)
           }
         );
     }
-    println!("{:?}",table);
+    
     // Return resulting table as HashMap
     table
   }
@@ -128,6 +133,6 @@ fn main() {
     .parse::<usize>()
     .unwrap();
   let table = generate_table(&contents, order);
-  //let result = generate_text(length, &contents, table, order);
-  //println!("{:?}",table);
+  let result = generate_text(length, table, order);
+  println!("{}",result);
 }
