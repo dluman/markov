@@ -1,7 +1,23 @@
-# markov
-A flexible, all n-gram (bi-grams+) Markov chain-based text generator. Always looking for improvements, so suggest away!
+# A Rusty Chain
+
+A flexible, all n-gram (bi-grams+) Markov chain-based text generator. This used to be in python, and then I decided to learn Rust.
+
 ## Notes on usage
-The command-line implementation of this Python script calls for at least two, but up to three, parameters. They are:
-* -t: specifies a text to train the chain. If a chain file already exists, new training appends to the current model.
-* -g: # of sentences to generate.
-* -n: n-gram model to use. This must be the same as the model order used to train (e.g., if training a trigram model (n=3), the -n flag must also be set to a trigram (n=3).
+
+This (currently) requires three parameters:
+
+* Text file to read
+* Order to use to create chain
+    * Integer
+* Number of characters to generate
+    * Integer
+    
+Once compiled, its standard usage is:
+
+```bash
+./markov {TEXT} {ORDER} {CHARACTERS TO GENERATE}
+```
+
+## Watch This Space
+
+See above.
