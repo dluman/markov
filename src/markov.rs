@@ -93,9 +93,13 @@ fn generate_table(contents: &String, order: usize)
         .take(order)
         .collect();
       table.entry(seq)
-        .and_modify(|map| if let Some(value) = map.get_mut(&next) { *value += 1; })
-        .or_insert_with(HashMap::new)
-        .insert(next,1);
+        .and_modify(|map|
+          if let Some(value) = map.get_mut(&next) {
+            *value += 1;
+          } else {
+            map.insert(next,1);
+          }
+        );
     }
     println!("{:?}",table);
     // Return resulting table as HashMap
