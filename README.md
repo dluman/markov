@@ -1,6 +1,8 @@
 # A Rusty Chain
 
-A flexible, all n-gram (bi-grams+) Markov chain-based text generator. This used to be in python, and then I decided to learn Rust.
+[![Build Status](https://travis-ci.com/dluman/markov.svg?branch=master)](https://travis-ci.com/dluman/markov)
+
+A flexible, all n-gram Markov chain-based text generator. This used to be in Python, and then I decided to learn Rust. Hence, this code isn't "idiomatic" in the way that it may eventually be. However, it works for my personal purposes as of now.
 
 ## Notes on usage
 
