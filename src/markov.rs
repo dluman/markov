@@ -2,10 +2,18 @@ extern crate rand;
 
 use rand::{Rng};
 use rand::seq::SliceRandom;
+use serde::{Serialize, Deserialize};
+use serde_json;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::Read;
+use std::io::Write;
+
+#[derive(Serialize, Deserialize)]
+struct ChainTable {
+  model: HashMap<String,HashMap<String, usize>>
+}
 
 fn is_upper(c: &String)
   -> bool {
@@ -152,6 +160,21 @@ fn read(filename: String)
     contents
   }
 
+fn save_model(table: HashMap<String, HashMap<String, usize>>)
+  -> Result<(), std::io::Error> {
+    let model = ChainTable {
+      model: table
+    };
+    let result = serde_json::to_string(&model)?;
+    let mut file = match File::create("model.json") {
+      Err(_why) => panic!("Everybody panic!"),
+      Ok(file) => file,
+    };
+    file.write_all(result.as_bytes())
+      .expect("Issue writing the model file.");
+    Ok(())
+  }
+
 fn main() {
 
   // Do all sorts of jank argparsing and function calling
@@ -169,9 +192,28 @@ fn main() {
     .parse::<usize>()
     .unwrap();
   
-  let table = generate_table(&contents, order);
+  // Load model if it already exists, else generate it
+  let table = match File::open("model.json") {
+    Err(_why) => generate_table(&contents, order),
+    Ok(_file) => {
+      let mut contents = String::new();
+      
+      let mut fh = File::open("model.json")
+        .expect("Unable to open model.");
+    
+      fh.read_to_string(&mut contents)
+        .expect("Unable to open model.");
+        
+      let chain: ChainTable = serde_json::from_str(&contents).unwrap();
+    
+      chain.model
+    },
+  };
   
-  let result = generate_text(length, table, order);
+  save_model(table.clone())
+    .expect("Issue saving the model file");
+  
+  let result = generate_text(length, table.clone(), order);
   
   println!("{}",result);
 }
