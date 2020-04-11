@@ -7,11 +7,25 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 
+fn is_upper(c: &String)
+  -> bool {
+    let mut upper: bool = false;
+    if c.is_empty() {
+      return upper;
+    }
+    upper = c
+      .chars()
+      .next()
+      .unwrap()
+      .is_ascii_uppercase();
+    upper
+  }
+
 fn weighted_char(map: HashMap<String, usize>)
   -> String {
     
     if map.is_empty() {
-      return "".to_string();
+      return " ".to_string();
     }
   
     let mut choice = String::new();
@@ -23,7 +37,7 @@ fn weighted_char(map: HashMap<String, usize>)
     }
     
     let mut seed = rand::thread_rng()
-      .gen_range(1,sum);
+      .gen_range(0,sum);
       
     'gen: for (key,value) in &map {
       if seed <= *value {
@@ -46,27 +60,32 @@ fn generate_text(length: usize, table: HashMap<String,HashMap<String, usize>>, o
       .cloned()
       .collect();
 
-   // Get random first character from keys
-    let mut first_char = keys
-      .choose(&mut rand::thread_rng())
-      .unwrap();
-      
-    result.push_str(first_char);
+    // Get random first character from keys
+    let mut first_char = String::new();
+    
+    while !is_upper(&first_char) {
+    first_char = keys
+       .choose(&mut rand::thread_rng())
+       .unwrap()
+       .to_string();
+    }
+    
+    result.push_str(&first_char);
     
     let mut next_char;
     for _ in 0..(length / order) {
-      match table.get(first_char) {
+      match table.get(&first_char) {
         Some(map) => next_char = weighted_char(map.to_owned()),
         _ => next_char = keys
           .choose(&mut rand::thread_rng())
           .unwrap()
           .to_owned(),
       }
-    
-      first_char = &next_char;
+
+      first_char = next_char.to_owned();
       result.push_str(&next_char);
     }
-    
+
     result
   }
 
@@ -75,23 +94,16 @@ fn generate_table(contents: &String, order: usize)
   
     let mut table = HashMap::new();
     
-    // Read text once, store sequences in HashMap
-    for x in 0..contents.len() {
-      let seq: String = contents
-        .chars()
-        .skip(x)
-        .take(order)
-        .collect();
-      table.insert(seq.to_string(),HashMap::new());
-    }
-    
-    // Read text again to associate 
+    // Read contents to associate 
     for x in 0..(contents.len() - order) {
       let seq: String = contents
         .chars()
         .skip(x)
         .take(order)
         .collect();
+      if !table.contains_key(&seq.to_owned()) {
+        table.insert(seq.clone(),HashMap::new());
+      }
       let next: String = contents
         .chars()
         .skip(x + order)
